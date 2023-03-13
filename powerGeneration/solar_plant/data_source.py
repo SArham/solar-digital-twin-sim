@@ -1,6 +1,7 @@
 from os.path import basename, dirname, join, abspath
 from os import listdir
 import pandas as pd
+from datetime import datetime
 
 
 class CustomData:
@@ -30,9 +31,27 @@ class CustomData:
         self.path = kwargs.get("path", self.path)
         # Load CSV file into a dataframe
         self.data = pd.read_csv(self.path)
+        self.data["Year"] = self.data["Year"].astype(int)
+        self.data["Month"] = self.data["Month"].astype(int)
+        self.data["Day"] = self.data["Day"].astype(int)
+        self.data["Hour"] = self.data["Hour"].astype(int)
+        self.data["Minute"] = self.data["Minute"].astype(int)
+        self.data["datetime"] = self.data.apply(lambda row:
+            f"{row['Year'].astype(int)}{row['Month'].astype(int):02}{row['Day'].astype(int):02}{row['Hour'].astype(int):02}{row['Minute'].astype(int):02}", axis=1)
+        self.data = self.data.rename(columns={
+            'Surface Albedo': 'albedo',
+            'DNI': 'dni',
+            'GHI': 'ghi',
+            'DHI': 'dhi',
+            'Wind Speed': 'wind_speed',
+            'Temperature': 'temp_air'
+        })
 
-    def __call__(self, *args, **kwargs):
-        return self.data
+
+    def __call__(self):
+        for (index, row) in self.data.iterrows():
+            yield index, row
 
 if __name__ == '__main__':
     data_source = CustomData()
+    print(data_source.data.columns)

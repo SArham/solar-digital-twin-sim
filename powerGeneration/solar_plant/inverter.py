@@ -7,9 +7,9 @@ import pvlib
 class Inverter:
     # Inverter Parameters
     inverter_efficiency = 0.968  # 96.8%
-    inverter_power_dc = 8000  # Watts
+    inverter_power_dc = 26000  # Watts
     # inverter_power_ac = 6000
-    inverter_power_ac = 7000  # Watts
+    inverter_power_ac = inverter_efficiency * inverter_power_dc  # Watts
     # inverter_power_dc = 6900 # Watts
 
     Vac = 230  # Volts

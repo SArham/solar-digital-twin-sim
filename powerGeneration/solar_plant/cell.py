@@ -14,18 +14,18 @@ class Cell:
         "V_oc_ref": 41.7,        # Volts
         "I_mp_ref": 17.34,       # Amps
         "V_mp_ref": 34.6,        # Volts
-        "T_coef_I_sc": 0.04,     # %/C
-        "T_coef_V_oc": -0.25,    # %/C
+        "T_coef_I_sc": 0.04,     # % / C
+        "T_coef_V_oc": -0.25,    # % / C
         "T_NOCT": 43,            # degrees
-        "T_coef_P_max": -0.0037  # %/C
+        "T_coef_P_max": -0.0037  # % / C
     }
 
     def __init__(self, **kwargs):
         self.options.update(kwargs)
         self.options["module_area"] = self.options["module_length"] * self.options["module_width"]
-        self.options["alpha_sc"] = self.options["T_coef_I_sc"] * self.options["I_sc_ref"]   # A/ deg C
-        self.options["beta_oc"] = self.options["T_coef_V_oc"] * self.options["V_oc_ref"]  # V/ deg C
-        self.options["gamma_pdc"] = self.options["T_coef_P_max"] * self.options["power_STC"]  # %/deg C
+        self.options["alpha_sc"] = self.options["T_coef_I_sc"] * self.options["I_sc_ref"]   # A / deg C
+        self.options["beta_oc"] = self.options["T_coef_V_oc"] * self.options["V_oc_ref"]  # V / deg C
+        self.options["gamma_pdc"] = self.options["T_coef_P_max"] * self.options["power_STC"] / 272.15  # % / deg C
 
     def get(self, key):
         return self.options[key]
