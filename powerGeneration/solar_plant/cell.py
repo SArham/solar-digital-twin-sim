@@ -1,5 +1,3 @@
-import pvlib
-
 
 class Cell:
     options = {
@@ -19,8 +17,12 @@ class Cell:
         "T_NOCT": 43,            # degrees
         "T_coef_P_max": -0.0037  # % / C
     }
+    power = []
+    temp = []
+    time = []
 
-    def __init__(self, **kwargs):
+    def __init__(self, cell_no, **kwargs):
+        self.cell_no = cell_no
         self.options.update(kwargs)
         self.options["module_area"] = self.options["module_length"] * self.options["module_width"]
         self.options["alpha_sc"] = self.options["T_coef_I_sc"] * self.options["I_sc_ref"]   # A / deg C
@@ -29,6 +31,13 @@ class Cell:
 
     def get(self, key):
         return self.options[key]
+
+    def set_power(self, power, time):
+        self.power.append(power)
+        self.time.append(time)
+
+    def set_temp(self, temp):
+        self.temp.append(temp)
 
     def __call__(self):
         pass

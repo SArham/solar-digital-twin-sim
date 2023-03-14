@@ -4,10 +4,12 @@ from astral.sun import azimuth, zenith
 import pytz
 from datetime import datetime
 import pvlib
+import pandas as pd
 
 from solar_plant.inverter import Inverter
 from solar_plant.cell_array import CellArray
 from solar_plant.data_source import CustomData
+from tqdm import tqdm
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -27,7 +29,8 @@ class PowerPlant:
         # Defining a location for pvlib and astral
         location = pvlib.location.Location(
             latitude=self.latitude,
-            longitude=self.longitude)
+            longitude=self.longitude,
+            tz='Asia/Karachi')
         loc = LocationInfo(
             name='Solar Plant 1',
             region='Karachi, Pakistan',
@@ -38,35 +41,23 @@ class PowerPlant:
         self.data = CustomData()
 
         timezone = pytz.timezone("Asia/Karachi")
-        utc = pytz.timezone("UTC")
 
         all_parameters = pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS['sapm']
         parameters = all_parameters['open_rack_glass_polymer']
 
-        system = pvlib.pvsystem.PVSystem(
-            name='Karachi Array',
-            module=self.array_module,
-            module_parameters={'pdc0': self.array1.cells[0].get("power_STC"),
-                               'gamma_pdc': self.array1.parameters['gamma_r']},
-            surface_tilt=self.array1.tilt_angle,
-            surface_azimuth=self.array1.surface_azimuth,
-            temperature_model_parameters=parameters,
-            inverter=self.inverter_module,
-            inverter_parameters={'pdc0': self.inverter.inverter_power_dc,
-                                 'eta_inv_nom': self.inverter.inverter_efficiency},
-            modules_per_string=100,
-            strings_per_inverter=1)
-
-        mc = pvlib.modelchain.ModelChain(
-            system,
-            location,
-            aoi_model='physical',
-            spectral_model='no_loss')
-
-        for (index, row) in self.data():
-            row_time = datetime.strptime(row['datetime'], '%Y%m%d%H%M').astimezone(timezone)
+        dc_output = []
+        ac_output = []
+        azim = []
+        zen = []
+        cell_temp = []
+        irradiance_list = []
+        timestamps = []
+        for (index, row) in tqdm(self.data()):
+            t = datetime.strptime(row['datetime'], '%Y%m%d%H%M')
+            row_time = t.astimezone(timezone)
             row_azimuth = azimuth(loc.observer, row_time)
             row_zenith = zenith(loc.observer, row_time)
+
             irradiance_df = pvlib.irradiance.get_total_irradiance(
                 surface_tilt=self.array1.tilt_angle,
                 surface_azimuth=self.array1.surface_azimuth,
@@ -80,33 +71,41 @@ class PowerPlant:
             cell_temperature = pvlib.temperature.sapm_cell(
                 irradiance_df['poa_global'],
                 row['temp_air'],
-                row['wind_speed'], **parameters)
+                row['wind_speed'],
+                **parameters)
 
             dc_power_output = pvlib.pvsystem.pvwatts_dc(
                 irradiance_df['poa_global'],
                 cell_temperature,
                 self.array1.power,
-                self.array1.parameters['gamma_r']
-            )
+                self.array1.parameters['gamma_r'])
 
             ac_power_output = pvlib.inverter.pvwatts(
                 dc_power_output,
                 self.inverter.inverter_power_ac/self.inverter.inverter_efficiency,
                 self.inverter.inverter_efficiency,
-                eta_inv_ref=0.9637
-            )
+                eta_inv_ref=0.9637)
 
-            # ModelChain
-            # weather_data = pd.DataFrame(self.data.data, index=[index])
-            # weather_data = weather_data[['albedo',
-            # 'dni',
-            # 'ghi',
-            # 'dhi',
-            # 'wind_speed',
-            # 'temp_air']]
+            self.array1.add_power_and_temp(dc_power_output[0], t, cell_temperature)
+            self.inverter.add_power(dc_power_output[0], ac_power_output[0], t)
 
-            print(dc_power_output[0], ac_power_output[0])
+            irradiance_list.append(irradiance_df["poa_global"])
+            cell_temp.append(cell_temperature)
+            dc_output.append(dc_power_output[0])
+            ac_output.append(ac_power_output[0])
+            azim.append(row_azimuth)
+            zen.append(row_zenith)
+            timestamps.append(pd.Timestamp(row_time))
 
+        self.data.data["irradiance"] = irradiance_list
+        self.data.data["cell_temp"] = cell_temp
+        self.data.data["solar_zenith"] = zen
+        self.data.data["solar_azimuth"] = azim
+        self.data.data["dc_output"] = dc_output
+        self.data.data["ac_output"] = ac_output
+        self.data.create_csv()
+        self.array1.create_csv()
+        self.inverter.create_csv()
 
 
 if __name__ == '__main__':
