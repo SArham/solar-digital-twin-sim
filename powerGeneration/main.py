@@ -14,6 +14,7 @@ from tqdm import tqdm
 import warnings
 warnings.filterwarnings('ignore')
 
+
 class PowerPlant:
     # Coordinates of the Location
     latitude = 24.953534

@@ -7,7 +7,7 @@ OUT_PATH = join(abspath(dirname(__file__)), "output")
 
 
 class CustomData:
-    names = ["2924399_24.69_67.10_2017.csv", "2924399_24.69_67.10_2018.csv", "2924399_24.69_67.10_2019.csv"]
+    names = ["2924399_24.69_67.10_2017.csv"] # , "2924399_24.69_67.10_2018.csv", "2924399_24.69_67.10_2019.csv"
     base_path = join(abspath(dirname(__file__)), "weather_data")
     path = join(abspath(dirname(__file__)), "weather_data", names[0])
 

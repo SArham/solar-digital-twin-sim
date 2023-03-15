@@ -23,7 +23,7 @@ class CellArray:
         for cell_index in range(0, cell_no):
             cell = Cell(cell_index)
             cell_power = cell.get("power_STC")
-            self.power += cell_power if cell_power is not None else 0
+            self.power += cell_power
             self.cells.append(cell)
 
         # Defining an Inverter and a Module Object
@@ -61,8 +61,8 @@ class CellArray:
         min_fluctuation = average_power * self.min_fluctuation_per
         for index in range(0, no_of_panels, 2):
             delta = uniform(min_fluctuation, max_fluctuation)
-            self.cells[index].set_power(average_power + delta, pd.Timestamp(time))
-            self.cells[index+1].set_power(average_power - delta, pd.Timestamp(time))
+            self.cells[index].set_power(round(average_power + delta, 2), pd.Timestamp(time))
+            self.cells[index+1].set_power(round(average_power - delta, 2), pd.Timestamp(time))
 
     def __add_temperature(self, temp):
         no_of_panels = len(self.cells)
@@ -70,8 +70,8 @@ class CellArray:
         min_fluctuation = temp * self.min_fluctuation_per
         for index in range(0, no_of_panels, 2):
             delta = uniform(min_fluctuation, max_fluctuation)
-            self.cells[index].set_temp(temp + delta)
-            self.cells[index + 1].set_temp(temp - delta)
+            self.cells[index].set_temp(round(temp + delta, 2))
+            self.cells[index + 1].set_temp(round(temp - delta, 2))
 
     def get_module(self):
         transposed_params = self.parameters.transpose()
